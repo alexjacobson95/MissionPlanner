@@ -62,6 +62,8 @@
             this._3DRradio1 = new MissionPlanner._3DRradio();
             this.backstageViewPagebatmon = new MissionPlanner.Controls.BackstageView.BackstageViewPage();
             this.configBatteryMonitoring1 = new MissionPlanner.GCSViews.ConfigurationView.ConfigBatteryMonitoring();
+            this.backstageViewPageCamCntrl = new MissionPlanner.Controls.BackstageView.BackstageViewPage();
+            this.configCameraControl1 = new MissionPlanner.GCSViews.ConfigurationView.ConfigCameraControl();
             this.backstageViewPagecompassmot = new MissionPlanner.Controls.BackstageView.BackstageViewPage();
             this.configCompassMot1 = new MissionPlanner.GCSViews.ConfigurationView.ConfigCompassMot();
             this.backstageViewPagesonar = new MissionPlanner.Controls.BackstageView.BackstageViewPage();
@@ -103,6 +105,7 @@
             this.backstageView.Pages.Add(this.backstageViewPageopt);
             this.backstageView.Pages.Add(this.backstageViewPage3drradio);
             this.backstageView.Pages.Add(this.backstageViewPagebatmon);
+            this.backstageView.Pages.Add(this.backstageViewPageCamCntrl);
             this.backstageView.Pages.Add(this.backstageViewPagecompassmot);
             this.backstageView.Pages.Add(this.backstageViewPagesonar);
             this.backstageView.Pages.Add(this.backstageViewPageairspeed);
@@ -350,6 +353,22 @@
             resources.ApplyResources(this.configBatteryMonitoring1, "configBatteryMonitoring1");
             this.configBatteryMonitoring1.Name = "configBatteryMonitoring1";
             // 
+            // backstageViewPageCamCntrl
+            // 
+            this.backstageViewPageCamCntrl.Advanced = false;
+            this.backstageViewPageCamCntrl.DataBindings.Add(new System.Windows.Forms.Binding("Show", this.initialSetupBindingSource, "isConnected", true));
+            this.backstageViewPageCamCntrl.LinkText = "Camera Control";
+            this.backstageViewPageCamCntrl.Page = this.configCameraControl1;
+            this.backstageViewPageCamCntrl.Parent = this.backstageViewPageopt;
+            this.backstageViewPageCamCntrl.Show = true;
+            this.backstageViewPageCamCntrl.Spacing = 30;
+            resources.ApplyResources(this.backstageViewPageCamCntrl, "backstageViewPageCamCntrl");
+            // 
+            // configCameraControl1
+            // 
+            resources.ApplyResources(this.configCameraControl1, "configCameraControl1");
+            this.configCameraControl1.Name = "configCameraControl1";
+            // 
             // backstageViewPagecompassmot
             // 
             this.backstageViewPagecompassmot.Advanced = false;
@@ -522,6 +541,7 @@
         private ConfigurationView.ConfigFailSafe configFailSafe1;
         private _3DRradio _3DRradio1;
         private ConfigurationView.ConfigBatteryMonitoring configBatteryMonitoring1;
+        private ConfigurationView.ConfigCameraControl configCameraControl1;
         private ConfigurationView.ConfigHWSonar configHWSonar1;
         private ConfigurationView.ConfigHWAirspeed configHWAirspeed1;
         private ConfigurationView.ConfigHWOptFlow configHWOptFlow1;
@@ -543,6 +563,7 @@
         private Controls.BackstageView.BackstageViewPage backstageViewPagefs;
         private Controls.BackstageView.BackstageViewPage backstageViewPage3drradio;
         private Controls.BackstageView.BackstageViewPage backstageViewPagebatmon;
+        private Controls.BackstageView.BackstageViewPage backstageViewPageCamCntrl;
         private Controls.BackstageView.BackstageViewPage backstageViewPagesonar;
         private Controls.BackstageView.BackstageViewPage backstageViewPageairspeed;
         private Controls.BackstageView.BackstageViewPage backstageViewPageoptflow;
