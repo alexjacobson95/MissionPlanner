@@ -33,6 +33,9 @@ namespace MissionPlanner.GCSViews.ConfigurationView
         private Label label6;
         private Panel panel1;
         private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
+        private Panel panel2;
+        private Button button1;
+        private Label label7;
         private PictureBox pictureBox1;
 
         public ConfigCameraControl()
@@ -98,6 +101,9 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             comboBox1.Items.Add("Camera Control Board");
             setPinTypeComboBox();
             pictureBox1.Image = Image.FromStream(ms);
+
+            //check for lua file update
+            panel2.Visible = true;
         }
 
         public void Deactivate()
@@ -126,10 +132,14 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             this.label6 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.label7 = new System.Windows.Forms.Label();
+            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
             this.panel1.SuspendLayout();
+            this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // pictureBox1
@@ -165,14 +175,12 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             // 
             // pictureBox2
             // 
-            this.pictureBox2.Image = global::MissionPlanner.Properties.Resources.IMAG0866_1;
             resources.ApplyResources(this.pictureBox2, "pictureBox2");
             this.pictureBox2.Name = "pictureBox2";
             this.pictureBox2.TabStop = false;
             // 
             // pictureBox3
             // 
-            this.pictureBox3.Image = global::MissionPlanner.Properties.Resources.IMAG0865;
             resources.ApplyResources(this.pictureBox3, "pictureBox3");
             this.pictureBox3.Name = "pictureBox3";
             this.pictureBox3.TabStop = false;
@@ -259,8 +267,28 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             this.lineShape3});
             this.shapeContainer2.TabStop = false;
             // 
+            // panel2
+            // 
+            this.panel2.Controls.Add(this.button1);
+            this.panel2.Controls.Add(this.label7);
+            resources.ApplyResources(this.panel2, "panel2");
+            this.panel2.Name = "panel2";
+            // 
+            // label7
+            // 
+            resources.ApplyResources(this.label7, "label7");
+            this.label7.ForeColor = System.Drawing.Color.Red;
+            this.label7.Name = "label7";
+            // 
+            // button1
+            // 
+            resources.ApplyResources(this.button1, "button1");
+            this.button1.Name = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
             // ConfigCameraControl
             // 
+            this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
@@ -279,6 +307,8 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
+            this.panel2.ResumeLayout(false);
+            this.panel2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 

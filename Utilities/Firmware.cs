@@ -522,7 +522,7 @@ namespace MissionPlanner.Utilities
                 updateProgress(0, "Downloading from Internet");
 
                 dataStream.ReadTimeout = 30000;
-
+                
                 while (dataStream.CanRead)
                 {
                     try
