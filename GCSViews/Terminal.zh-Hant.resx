@@ -136,9 +136,7 @@
     <value>0</value>
   </data>
   <data name="TXT_terminal.Text" xml:space="preserve">
-    <value>*NOTE* Please click connect above
-CLI Works only on first connect of power, log download only over USB
-</value>
+    <value>*注意* 記錄檔下載只能使用 USB 連線時的 CLI 模式</value>
   </data>
   <data name="BUTsetupshow.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 32</value>

@@ -87,6 +87,10 @@ namespace MissionPlanner.Joystick
             Arm,
             Disarm,
             Digicam_Control,
+            TakeOff,
+            Mount_Mode,
+            Toggle_Pan_Stab,
+            Gimbal_pnt_track
        //     Mount_Control
         }
 
@@ -570,12 +574,60 @@ namespace MissionPlanner.Joystick
                     if (getJoystickAxis(8) != Joystick.joystickaxis.None)
                         MainV2.comPort.MAV.cs.rcoverridech8 = pickchannel(8, JoyChannels[8].axis, JoyChannels[8].reverse, JoyChannels[8].expo);
 
-                    DoJoystickButtonFunction();
+                    // disable button actions when not connected.
+                    if (MainV2.comPort.BaseStream.IsOpen)
+                        DoJoystickButtonFunction();
 
                     //Console.WriteLine("{0} {1} {2} {3}", MainV2.comPort.MAV.cs.rcoverridech1, MainV2.comPort.MAV.cs.rcoverridech2, MainV2.comPort.MAV.cs.rcoverridech3, MainV2.comPort.MAV.cs.rcoverridech4);
                 }
+                catch (InputLostException ex)
+                {
+                    clearRCOverride();
+                    MainV2.instance.Invoke((System.Action)
+                    delegate
+                    {
+                        CustomMessageBox.Show("Lost Joystick","Lost Joystick");
+                    });                    
+                    return;
+                }
                 catch (Exception ex) { log.Info("Joystick thread error " + ex.ToString()); } // so we cant fall out
             }
+        }
+
+        public void clearRCOverride()
+        {
+            // disable it, before continuing
+            this.enabled = false;
+
+            MAVLink.mavlink_rc_channels_override_t rc = new MAVLink.mavlink_rc_channels_override_t();
+
+            rc.target_component = MainV2.comPort.MAV.compid;
+            rc.target_system = MainV2.comPort.MAV.sysid;
+
+            rc.chan1_raw = 0;
+            rc.chan2_raw = 0;
+            rc.chan3_raw = 0;
+            rc.chan4_raw = 0;
+            rc.chan5_raw = 0;
+            rc.chan6_raw = 0;
+            rc.chan7_raw = 0;
+            rc.chan8_raw = 0;
+
+            MainV2.comPort.sendPacket(rc);
+            System.Threading.Thread.Sleep(20);
+            MainV2.comPort.sendPacket(rc);
+            System.Threading.Thread.Sleep(20);
+            MainV2.comPort.sendPacket(rc);
+            System.Threading.Thread.Sleep(20);
+            MainV2.comPort.sendPacket(rc);
+            System.Threading.Thread.Sleep(20);
+            MainV2.comPort.sendPacket(rc);
+            System.Threading.Thread.Sleep(20);
+            MainV2.comPort.sendPacket(rc);
+
+            MainV2.comPort.sendPacket(rc);
+            MainV2.comPort.sendPacket(rc);
+            MainV2.comPort.sendPacket(rc);
         }
 
         public void DoJoystickButtonFunction()
@@ -614,6 +666,20 @@ namespace MissionPlanner.Joystick
                             });
                         }
                         break;
+                    case buttonfunction.Mount_Mode:
+                        if (but.p1 != null)
+                        {
+                            MainV2.instance.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate()
+                            {
+                                try
+                                {
+                                    MainV2.comPort.setParam("MNT_MODE", but.p1);
+                                }
+                                catch { CustomMessageBox.Show("Failed to change mount mode"); }
+                            });
+                        }
+                        break;
+                        
                     case buttonfunction.Arm:
                         MainV2.instance.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate()
                             {
@@ -623,6 +689,23 @@ namespace MissionPlanner.Joystick
                                 }
                                 catch { CustomMessageBox.Show("Failed to Arm"); }
                             });
+                        break;
+                    case buttonfunction.TakeOff:
+                        MainV2.instance.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate()
+                        {
+                            try
+                            {
+                                MainV2.comPort.setMode("Guided");
+                                if (MainV2.comPort.MAV.cs.firmware == MainV2.Firmwares.ArduCopter2) {
+                                    MainV2.comPort.doCommand(MAVLink.MAV_CMD.TAKEOFF, 0, 0, 0, 0, 0, 0, 2);
+                                }
+                                else
+                                {
+                                    MainV2.comPort.doCommand(MAVLink.MAV_CMD.TAKEOFF, 0, 0, 0, 0, 0, 0, 20);
+                                }
+                            }
+                            catch { CustomMessageBox.Show("Failed to takeoff"); }
+                        });
                         break;
                     case buttonfunction.Disarm:
                         MainV2.instance.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate()
@@ -687,6 +770,28 @@ namespace MissionPlanner.Joystick
                                }
                                catch { CustomMessageBox.Show("Failed to DO_REPEAT_SERVO"); }
                            });
+                        break;
+                    case buttonfunction.Toggle_Pan_Stab:
+                        MainV2.instance.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate()
+                          {
+                              try
+                              {
+                                  float current = (float)MainV2.comPort.MAV.param["MNT_STAB_PAN"];
+                                  float newvalue = (current > 0) ? 0 : 1;
+                                  MainV2.comPort.setParam("MNT_STAB_PAN", newvalue);
+                              }
+                              catch { CustomMessageBox.Show("Failed to Toggle_Pan_Stab"); }
+                          });
+                        break;
+                    case buttonfunction.Gimbal_pnt_track:
+                        MainV2.instance.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate()
+                        {
+                            try
+                            {
+                                MainV2.comPort.doCommand(MAVLink.MAV_CMD.DO_SET_ROI, 0, 0, 0, 0, MainV2.comPort.MAV.cs.gimballat, MainV2.comPort.MAV.cs.gimballng, (float)MainV2.comPort.MAV.cs.GimbalPoint.Alt);
+                            }
+                            catch { CustomMessageBox.Show("Failed to Gimbal_pnt_track"); }
+                        });
                         break;
                 }
             }

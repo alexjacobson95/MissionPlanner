@@ -97,26 +97,36 @@ namespace MissionPlanner.Utilities
 
         public static PointLatLngAlt ProjectPoint()
         {
-            //MainV2.comPort.GetMountStatus();
+            MainV2.comPort.GetMountStatus();
 
-            int fixme;
+            // this should be looking at rc_channel function
+            yawchannel =  (int)(float)MainV2.comPort.MAV.param["MNT_RC_IN_PAN"];
+
+            pitchchannel = (int)(float)MainV2.comPort.MAV.param["MNT_RC_IN_TILT"];
+
+            rollchannel = (int)(float)MainV2.comPort.MAV.param["MNT_RC_IN_ROLL"];
 
             if (!MainV2.comPort.BaseStream.IsOpen)
                 return PointLatLngAlt.Zero;
 
             PointLatLngAlt currentlocation = new PointLatLngAlt(MainV2.comPort.MAV.cs.lat, MainV2.comPort.MAV.cs.lng);
 
-            double yawangle = MainV2.comPort.MAV.cs.campointc * 0.01f;
-            double rollangle = MainV2.comPort.MAV.cs.campointb * 0.01f;
-            double pitchangle = MainV2.comPort.MAV.cs.campointa * 0.01f;
+            double yawangle = MainV2.comPort.MAV.cs.campointc;
+            double rollangle = MainV2.comPort.MAV.cs.campointb;
+            double pitchangle = MainV2.comPort.MAV.cs.campointa;
 
-            yawangle = ConvertPwmtoAngle(axis.yaw);
-            //rollangle = ConvertPwmtoAngle(axis.roll);
-            pitchangle = ConvertPwmtoAngle(axis.pitch) + MainV2.comPort.MAV.cs.pitch;
 
-            pitchangle -= Math.Sin(yawangle * deg2rad) * MainV2.comPort.MAV.cs.roll;
+            if (Math.Abs(rollangle) > 180 || yawangle == 0 && pitchangle == 0)
+            {
+                yawangle = ConvertPwmtoAngle(axis.yaw);
+                //rollangle = ConvertPwmtoAngle(axis.roll);
+                pitchangle = ConvertPwmtoAngle(axis.pitch) + MainV2.comPort.MAV.cs.pitch;
+
+                pitchangle -= Math.Sin(yawangle * deg2rad) * MainV2.comPort.MAV.cs.roll;
+            }
 
             // tan (o/a)
+            // todo account for ground elevation change.
             double dist = Math.Tan((90 +pitchangle)* deg2rad) * (MainV2.comPort.MAV.cs.alt);
 
             if (dist > 9999)
@@ -128,11 +138,6 @@ namespace MissionPlanner.Utilities
 
             //Console.WriteLine(newpos);
             return newpos;
-        }
-
-        public void test()
-        {
-
         }
     }
 }

@@ -110,8 +110,8 @@ namespace MissionPlanner
 
         public static bool ShowAirports { get; set; }
 
-        private static Utilities.adsb _adsb;
-        public static bool EnableADSB
+        private Utilities.adsb _adsb;
+        public bool EnableADSB
         {
             get { return _adsb != null; }
             set
@@ -119,6 +119,11 @@ namespace MissionPlanner
                 if (value == true)
                 {
                     _adsb = new Utilities.adsb();
+
+                    if (MainV2.config["adsbserver"] != null)
+                        Utilities.adsb.server = MainV2.config["adsbserver"].ToString();
+                    if (MainV2.config["adsbport"] != null)
+                        Utilities.adsb.serverport = int.Parse(MainV2.config["adsbport"].ToString());
                 }
                 else
                 {
@@ -433,7 +438,7 @@ namespace MissionPlanner
 
             if (MainV2.config["enableadsb"] != null)
             {
-                MainV2.EnableADSB = bool.Parse(config["enableadsb"].ToString());
+                MainV2.instance.EnableADSB = bool.Parse(config["enableadsb"].ToString());
             }
 
             // load this before the other screens get loaded
@@ -1128,6 +1133,10 @@ namespace MissionPlanner
         {
             base.OnClosing(e);
 
+            // speed up tile saving on exit
+            GMap.NET.GMaps.Instance.CacheOnIdleRead = false;
+            GMap.NET.GMaps.Instance.BoostCacheEngine = true;
+
             log.Info("MainV2_FormClosing");
 
             config["MainHeight"] = this.Height;
@@ -1155,23 +1164,28 @@ namespace MissionPlanner
 
             Warnings.WarningEngine.Stop();
 
-            // shutdown threads
-            GCSViews.FlightData.threadrun = 0;
-
             log.Info("closing pluginthread");
 
             pluginthreadrun = false;
 
-            PluginThreadrunner.WaitOne();
+            pluginthread.Join();
 
             log.Info("closing serialthread");
 
-            // shutdown local thread
             serialThread = false;
 
-          //  SerialThreadrunner.WaitOne();
+            serialreaderthread.Join();
+
+            log.Info("closing joystickthread");
 
             joystickthreadrun = false;
+
+            joystickthread.Join();
+
+            log.Info("closing httpthread");
+
+            // if we are waiting on a socket we need to force an abort
+            httpserver.Stop();
 
             log.Info("sorting tlogs");
             try
@@ -1222,9 +1236,6 @@ namespace MissionPlanner
             log.Info("save config");
             // save config
             xmlconfig(true);
-
-            httpserver.run = false;
-            httpserver.tcpClientConnected.Set();
 
             Console.WriteLine(httpthread.IsAlive);
             Console.WriteLine(joystickthread.IsAlive);
@@ -1451,7 +1462,10 @@ namespace MissionPlanner
                                 */
                                 //                                Console.WriteLine(DateTime.Now.Millisecond + " {0} {1} {2} {3} {4}", rc.chan1_raw, rc.chan2_raw, rc.chan3_raw, rc.chan4_raw,rate);
 
-                                Console.WriteLine("Joystick btw " + comPort.BaseStream.BytesToWrite);
+                                //Console.WriteLine("Joystick btw " + comPort.BaseStream.BytesToWrite);
+
+                                if (!comPort.BaseStream.IsOpen)
+                                    continue;
 
                                 if (comPort.BaseStream.BytesToWrite < 50)
                                 {
@@ -1678,7 +1692,7 @@ namespace MissionPlanner
                     // speech for airspeed alerts
                     if (speechEnable && speechEngine != null && (DateTime.Now - speechlowspeedtime).TotalSeconds > 10 && (MainV2.comPort.logreadmode || comPort.BaseStream.IsOpen))
                     {
-                        if (MainV2.getConfig("speechlowspeedenabled") == "True")
+                        if (MainV2.getConfig("speechlowspeedenabled") == "True" && MainV2.comPort.MAV.cs.armed)
                         {
                             float warngroundspeed = 0;
                             float.TryParse(MainV2.getConfig("speechlowgroundspeedtrigger"), out warngroundspeed);
@@ -1718,7 +1732,7 @@ namespace MissionPlanner
                             int todo; // need a reset method
                             altwarningmax = (int)Math.Max(MainV2.comPort.MAV.cs.alt, altwarningmax);
 
-                            if (MainV2.getConfig("speechaltenabled") == "True" && MainV2.comPort.MAV.cs.alt != 0.00 && (MainV2.comPort.MAV.cs.alt <= warnalt))
+                            if (MainV2.getConfig("speechaltenabled") == "True" && MainV2.comPort.MAV.cs.alt != 0.00 && (MainV2.comPort.MAV.cs.alt <= warnalt) && MainV2.comPort.MAV.cs.armed)
                             {
                                 if (altwarningmax > warnalt)
                                 {
@@ -2271,6 +2285,8 @@ namespace MissionPlanner
 
         public void changelanguage(CultureInfo ci)
         {
+            log.Info("change lang to " + ci.ToString() + " current " + Thread.CurrentThread.CurrentUICulture.ToString());
+
             if (ci != null && !Thread.CurrentThread.CurrentUICulture.Equals(ci))
             {
                 Thread.CurrentThread.CurrentUICulture = ci;

@@ -48,8 +48,6 @@ namespace MissionPlanner
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
 
             ServicePointManager.DefaultConnectionLimit = 10;
-            ServicePointManager.Expect100Continue = true;
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3;
 
             System.Windows.Forms.Application.ThreadException += Application_ThreadException;
 
@@ -77,6 +75,7 @@ namespace MissionPlanner
             GMap.NET.MapProviders.GMapProviders.List.Add(Maps.WMSProvider.Instance);
             GMap.NET.MapProviders.GMapProviders.List.Add(Maps.Custom.Instance);
             GMap.NET.MapProviders.GMapProviders.List.Add(Maps.Earthbuilder.Instance);
+            GMap.NET.MapProviders.GMapProviders.List.Add(Maps.Statkart_Topo2.Instance);
             GMap.NET.MapProviders.GMapProviders.List.Add(Maps.MapBox.Instance);
             GMap.NET.MapProviders.GMapProviders.List.Add(Maps.MapboxNoFly.Instance);
 
@@ -104,7 +103,9 @@ namespace MissionPlanner
                 System.Configuration.ConfigurationManager.AppSettings["UpdateLocationVersion"] = "";
             }
 
-            fontgen.dowork();
+            CleanupFiles();
+
+            //fontgen.dowork();
 
             //adsb.server = "64.93.124.152";
             //adsb.serverport = 31001;
@@ -216,6 +217,17 @@ namespace MissionPlanner
                 Console.WriteLine("\nPress any key to exit!");
                 Console.ReadLine();
             }
+        }
+
+        static void CleanupFiles()
+        {
+            //cleanup bad file
+            string file = Application.StartupPath + Path.DirectorySeparatorChar + @"LogAnalyzer\tests\TestUnderpowered.py";
+            if (File.Exists(file))
+            {
+                File.Delete(file);
+            }
+            //File.Delete("*.xaml");
         }
 
 

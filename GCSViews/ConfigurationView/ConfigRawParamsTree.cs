@@ -89,20 +89,11 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             {
                 string value = param2[name].ToString();
 
-                foreach (data row in Params.Objects)
-                {
-                    checkandupdateparam(name, value, row);
-
-                    foreach (data data in row.children)
-                    {
-                        checkandupdateparam(name, value, data);
-                    }
-                  
-                }
+                checkandupdateparam(name, value);
             }
         }
 
-        void checkandupdateparam(string name, string value, data row)
+        void checkandupdateparam(string name, string value)
         {
             if (name == "SYSID_SW_MREV")
                 return;
@@ -126,11 +117,8 @@ namespace MissionPlanner.GCSViews.ConfigurationView
                 return;
             if (name == "FORMAT_VERSION")
                 return;
-            if (row.paramname.ToString() == name)
-            {
-                if (row.Value.ToString() != value.ToString())
-                    paramCompareForm_dtlvcallback(name, float.Parse(value));
-            }
+
+            paramCompareForm_dtlvcallback(name, float.Parse(value));
         }
 
         private void BUT_save_Click(object sender, EventArgs e)
@@ -149,9 +137,23 @@ namespace MissionPlanner.GCSViews.ConfigurationView
                 Hashtable data = new Hashtable();
                 foreach (data row in Params.Objects)
                 {
-                    float value = float.Parse(row.Value.ToString());
 
-                    data[row.paramname.ToString()] = value;
+                    foreach (var item in row.children) 
+                    {
+                        if (item.Value != null)
+                        {
+                            float value = float.Parse(item.Value.ToString());
+
+                            data[item.paramname.ToString()] = value;
+                        }
+                    }
+
+                    if (row.Value != null)
+                    {
+                        float value = float.Parse(row.Value.ToString());
+
+                        data[row.paramname.ToString()] = value;
+                    }
                 }
 
                 Utilities.ParamFile.SaveParamFile(sfd.FileName,data);
@@ -170,12 +172,15 @@ namespace MissionPlanner.GCSViews.ConfigurationView
                     MainV2.comPort.setParam(value, (float)_changes[value]);
 
                     _changes.Remove(value);
+
                 }
                 catch
                 {
                     CustomMessageBox.Show("Set " + value + " Failed");
                 }
             }
+
+            Params.Refresh();
         }
 
 
@@ -470,15 +475,28 @@ namespace MissionPlanner.GCSViews.ConfigurationView
 
         void paramCompareForm_dtlvcallback(string param, float value)
         {
-            foreach (OLVListItem rowitem in Params.Items)
-            {
-                data item = (data)rowitem.RowObject;
 
+            foreach (data item in Params.Objects)
+            {
                 if (item.paramname == param)
                 {
                     item.Value = value.ToString();
-                    rowitem.EnsureVisible();
+                    _changes[param] = value;
                     Params.RefreshObject(item);
+                    Params.Expand(item);
+                    break;
+                }
+
+                foreach (data item2 in item.children)
+                {
+                    if (item2.paramname == param)
+                    {
+                        item2.Value = value.ToString();
+                        _changes[param] = value;
+                        Params.RefreshObject(item2);
+                        Params.Expand(item2);
+                        break;
+                    }
                 }
             }
         }
@@ -505,7 +523,13 @@ namespace MissionPlanner.GCSViews.ConfigurationView
                 double min = 0;
                 double max = 0;
 
-                float newvalue = float.Parse(e.NewValue.ToString());
+                float newvalue = 0;
+
+                try
+                {
+                    newvalue = float.Parse(e.NewValue.ToString());
+                }
+                catch { CustomMessageBox.Show("Bad number"); e.Cancel = true; return; }
 
                 if (ParameterMetaDataRepository.GetParameterRange(((data)e.RowObject).paramname, ref min, ref max))
                 {

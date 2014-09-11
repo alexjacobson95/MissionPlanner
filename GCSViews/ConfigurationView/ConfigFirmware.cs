@@ -217,6 +217,11 @@ namespace MissionPlanner.GCSViews.ConfigurationView
                 pictureBoxOcta.Text = temp.name += " Octa";
                 pictureBoxOcta.Tag = temp;
             }
+            else if (temp.url2560_2.ToLower().Contains("antennatracker"))
+            {
+                pictureAntennaTracker.Text = temp.name;
+                pictureAntennaTracker.Tag = temp;
+            }
             else
             {
                 log.Info("No Home " + temp.name + " " + temp.url2560);
@@ -242,8 +247,12 @@ namespace MissionPlanner.GCSViews.ConfigurationView
 
                 if (updated)
                 {
-                    if (fwtoupload.url2560_2 != null && fwtoupload.url2560_2.ToLower().Contains("copter"))
+
+                    if (fwtoupload.url2560_2 != null && fwtoupload.url2560_2.ToLower().Contains("copter") && fwtoupload.name.ToLower().Contains("3.1"))
                         CustomMessageBox.Show("Warning, as of AC 3.1 motors will spin when armed, configurable through the MOT_SPIN_ARMED parameter", "Warning");
+
+                    if (fwtoupload.url2560_2 != null && fwtoupload.url2560_2.ToLower().Contains("copter") && fwtoupload.name.ToLower().Contains("3.2"))
+                        CustomMessageBox.Show("Warning, if you are installing AC 3.2 for the first time you MUST redo a Compass calibration.", "Warning");
                 }
                 else
                 {

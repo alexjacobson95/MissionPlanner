@@ -43,8 +43,14 @@ namespace MissionPlanner.Utilities
 
         ~httpserver()
         {
-            tcpClientConnected.Set();
             run = false;
+            tcpClientConnected.Set();
+        }
+
+        public static void Stop()
+        {
+            run = false;
+            tcpClientConnected.Set();
         }
 
         /// <summary>          
@@ -84,6 +90,11 @@ namespace MissionPlanner.Utilities
 
                     System.Threading.Thread.Sleep(50);
 
+                }
+                catch (ThreadAbortException ex) 
+                {
+                    log.Info(ex);
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -147,7 +158,7 @@ namespace MissionPlanner.Utilities
                     //url = url.Replace(" HTTP/1.0", "");
                     //url = url.Replace(" HTTP/1.1", "");
 
-                    Tracking.AddEvent("HTTPServer", "Get", url, "");
+                    Tracking.AddEvent("HTTPServer", "Get", "url", url);
 /////////////////////////////////////////////////////////////////
                     if (url.Contains("websocket"))
                     {
@@ -166,7 +177,7 @@ namespace MissionPlanner.Utilities
 
                             writer.WriteLine("Sec-WebSocket-Accept: " + accept);
 
-                            writer.WriteLine("Server: APM Planner");
+                            writer.WriteLine("Server: Mission Planner");
 
                             writer.WriteLine("");
 
@@ -204,7 +215,7 @@ namespace MissionPlanner.Utilities
                     /////////////////////////////////////////////////////////////////
                     else if (url.Contains("georefnetwork.kml"))
                     {
-                        string header = "HTTP/1.1 200 OK\r\nContent-Type: application/vnd.google-earth.kml+xml\r\nContent-Length: " + georefkml.Length + "\r\n\r\n";
+                        string header = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: application/vnd.google-earth.kml+xml\r\nContent-Length: " + georefkml.Length + "\r\n\r\n";
                         byte[] temp = asciiEncoding.GetBytes(header);
                         stream.Write(temp, 0, temp.Length);
 
@@ -212,9 +223,9 @@ namespace MissionPlanner.Utilities
 
                         stream.Write(buffer, 0, buffer.Length);
 
-                        goto again;
+                        //goto again;
 
-                        //stream.Close();
+                        stream.Close();
                     }
                     /////////////////////////////////////////////////////////////////
                     else if (url.Contains("network.kml"))
@@ -222,14 +233,14 @@ namespace MissionPlanner.Utilities
                         SharpKml.Dom.Document kml = new SharpKml.Dom.Document();
 
                         SharpKml.Dom.Placemark pmplane = new SharpKml.Dom.Placemark();
-                        pmplane.Name = "P/Q ";
+                        pmplane.Name = "P/Q " + MainV2.comPort.MAV.cs.altasl;
 
                         pmplane.Visibility = true;
 
                         SharpKml.Dom.Location loc = new SharpKml.Dom.Location();
                         loc.Latitude = MainV2.comPort.MAV.cs.lat;
                         loc.Longitude = MainV2.comPort.MAV.cs.lng;
-                        loc.Altitude = MainV2.comPort.MAV.cs.alt;
+                        loc.Altitude = MainV2.comPort.MAV.cs.altasl;
 
                         if (loc.Altitude < 0)
                             loc.Altitude = 0.01;
@@ -405,7 +416,7 @@ namespace MissionPlanner.Utilities
                     {
                         refreshmap();
 
-                        string header = "HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=APMPLANNER\r\n\r\n--APMPLANNER\r\n";
+                        string header = "HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=PLANNER\r\n\r\n--PLANNER\r\n";
                         byte[] temp = asciiEncoding.GetBytes(header);
                         stream.Write(temp, 0, temp.Length);
 
@@ -448,7 +459,7 @@ namespace MissionPlanner.Utilities
 
                             stream.Write(data, 0, data.Length);
 
-                            header = "\r\n--APMPLANNER\r\n";
+                            header = "\r\n--PLANNER\r\n";
                             temp = asciiEncoding.GetBytes(header);
                             stream.Write(temp, 0, temp.Length);
 
@@ -511,7 +522,7 @@ namespace MissionPlanner.Utilities
 
                                 memstream.Position = 0;
 
-                                string header = "HTTP/1.1 200 OK\r\nContent-Type: image/jpg\r\nContent-Length: " + memstream.Length + "\r\n\r\n";
+                                string header = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: image/jpg\r\nContent-Length: " + memstream.Length + "\r\n\r\n";
                                 byte[] temp = asciiEncoding.GetBytes(header);
                                 stream.Write(temp, 0, temp.Length);
 
@@ -528,9 +539,9 @@ namespace MissionPlanner.Utilities
                                 }
                             }
 
-                            goto again;
+                            //goto again;
 
-                            //stream.Close();
+                            stream.Close();
                         }
                         /////////////////////////////////////////////////////////////////
                         else
@@ -748,6 +759,7 @@ namespace MissionPlanner.Utilities
 <a href=/both.jpg>Map & hud image</a>
 <a href=/hud.html>hud html5</a>
 <a href=/network.kml>network kml</a>
+<a href=/georefnetwork.kml>georef kml</a>
 
 ";
                         temp = asciiEncoding.GetBytes(content);

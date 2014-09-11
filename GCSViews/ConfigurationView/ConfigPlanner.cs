@@ -66,6 +66,8 @@ namespace MissionPlanner.GCSViews.ConfigurationView
 
                 MainV2.cam.Start();
 
+                MainV2.config["video_device"] = CMB_videosources.SelectedIndex;
+
                 MainV2.config["video_options"] = CMB_videoresolutions.SelectedIndex;
 
                 BUT_videostart.Enabled = false;
@@ -82,21 +84,6 @@ namespace MissionPlanner.GCSViews.ConfigurationView
                 MainV2.cam.Dispose();
                 MainV2.cam = null;
             }
-        }
-
-        private void CMB_videosources_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (MainV2.MONO)
-                return;
-
-            // the reason why i dont populate this list is because on linux/mac this call will fail.
-            WebCamService.Capture capt = new WebCamService.Capture();
-
-            List<string> devices = WebCamService.Capture.getDevices();
-
-            CMB_videosources.DataSource = devices;
-
-            capt.Dispose();
         }
 
         private void CMB_videosources_SelectedIndexChanged(object sender, EventArgs e)
@@ -628,6 +615,15 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             if (MainV2.config["speedunits"] != null)
                 CMB_speedunits.Text = MainV2.config["speedunits"].ToString();
 
+            try 
+            {
+                if (MainV2.config["video_device"] != null)
+                {
+                    CMB_videosources_Click(this,null);
+                    CMB_videosources.SelectedIndex = int.Parse(MainV2.config["video_device"].ToString());
+                }            
+            } catch {}
+
 
             txt_log_dir.Text = MainV2.LogDir;
         }
@@ -785,8 +781,28 @@ namespace MissionPlanner.GCSViews.ConfigurationView
 
         private void chk_ADSB_CheckedChanged(object sender, EventArgs e)
         {
+            if (startup)
+                return;
+
+            if (((CheckBox)sender).Checked)
+            {
+                string server = "127.0.0.1";
+                if (MainV2.config["adsbserver"] != null)
+                    server = MainV2.config["adsbserver"].ToString();
+                if (System.Windows.Forms.DialogResult.Cancel == InputBox.Show("Server", "Server IP?", ref server))
+                    return;
+                MainV2.config["adsbserver"] = server;
+
+                string port = "30003";
+                if (MainV2.config["adsbport"] != null)
+                    port = MainV2.config["adsbport"].ToString();
+                if (System.Windows.Forms.DialogResult.Cancel == InputBox.Show("Server port", "Server port?", ref port))
+                    return;
+                MainV2.config["adsbport"] = port;
+            }
+
             MainV2.config["enableadsb"] = chk_ADSB.Checked.ToString();
-            MainV2.EnableADSB = CHK_showairports.Checked;
+            MainV2.instance.EnableADSB = CHK_showairports.Checked;
         }
     }
 }

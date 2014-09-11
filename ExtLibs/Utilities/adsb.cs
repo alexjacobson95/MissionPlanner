@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using log4net;
+using System.Threading;
 
 namespace MissionPlanner.Utilities
 {
@@ -26,15 +27,22 @@ namespace MissionPlanner.Utilities
         public static event EventHandler UpdatePlanePosition;
 
         static bool run = false;
-        static bool running = false;
+        static Thread thisthread;
 
         public static string server = "";
-        public static int serverport = 0;
+        public static int serverport = 0;  
 
         public adsb()
         {
             log.Info("adsb ctor");
-            System.Threading.ThreadPool.QueueUserWorkItem(TryConnect);
+
+            thisthread = new Thread(TryConnect);
+
+            thisthread.Name = "ADSB reader thread";
+
+            thisthread.IsBackground = true;
+
+            thisthread.Start();
         }
 
         public static void Stop()
@@ -42,26 +50,22 @@ namespace MissionPlanner.Utilities
             log.Info("adsb stop");
             run = false;
 
-            while (running)
-                System.Threading.Thread.Sleep(100);
+            if (thisthread != null)
+            {
+                thisthread.Abort();
+                thisthread.Join();
+                thisthread = null;
+            }
 
             log.Info("adsb stopped");
         }
 
-        void TryConnect(object obj)
+        void TryConnect()
         {
-            try
-            {
-                System.Threading.Thread.CurrentThread.Name = "ADSB Reader";
-            }
-            catch { }
-            System.Threading.Thread.CurrentThread.IsBackground = true;
-
             run = true;
 
             while (run)
             {
-                running = true;
                 log.Info("adsb connect loop");
                 //custom
                 try
@@ -152,7 +156,6 @@ namespace MissionPlanner.Utilities
             }
 
             log.Info("adsb thread exit");
-            running = false;
         }
 
         static Hashtable Planes = new Hashtable();
@@ -601,7 +604,7 @@ namespace MissionPlanner.Utilities
 
             //st.ReadTimeout = 5000;
 
-            while (true)
+            while (run)
             {
                 int by = st1.ReadByte();
                 if (by == -1)

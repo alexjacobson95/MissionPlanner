@@ -37,17 +37,17 @@ namespace MissionPlanner
         {
             InitializeComponent();
 
-            //if (System.Diagnostics.Debugger.IsAttached) {
+            if (System.Diagnostics.Debugger.IsAttached) {
             try
             {
-                //Controls.OpenGLtest ogl = new Controls.OpenGLtest();
+                Controls.OpenGLtest2 ogl = new Controls.OpenGLtest2();
 
-                //this.Controls.Add(ogl);
+                this.Controls.Add(ogl);
 
-                //ogl.Dock = DockStyle.Fill;
+                ogl.Dock = DockStyle.Fill;
             }
             catch { }
-           // }
+            }
 
             MissionPlanner.Utilities.Tracking.AddPage(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.ToString(), System.Reflection.MethodBase.GetCurrentMethod().Name);
         }
@@ -1056,8 +1056,6 @@ namespace MissionPlanner
 
             if (File.Exists(ofd.FileName))
             {
-                var log = Log.BinaryLog.ReadLog(ofd.FileName);
-
                 SaveFileDialog sfd = new SaveFileDialog();
                 sfd.Filter = "log|*.log";
 
@@ -1065,12 +1063,7 @@ namespace MissionPlanner
 
                 if (res == System.Windows.Forms.DialogResult.OK)
                 {
-                    StreamWriter sw = new StreamWriter(sfd.OpenFile());
-                    foreach (string line in log)
-                    {
-                        sw.Write(line);
-                    }
-                    sw.Close();
+                    MissionPlanner.Log.BinaryLog.ConvertBin(ofd.FileName, sfd.FileName);
                 }
             }
         }

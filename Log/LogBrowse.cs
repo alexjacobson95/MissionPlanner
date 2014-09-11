@@ -59,6 +59,14 @@ namespace MissionPlanner.Log
         List<displaylist> graphs = new List<displaylist>()
         { 
             new displaylist() { Name = "None"},
+            new displaylist() { Name = "Mechanical Failure", items = new displayitem[] { 
+                new displayitem(){ type= "ATT", field ="Roll"}, 
+                new displayitem(){ type= "ATT", field = "DesRoll"},
+                new displayitem(){ type= "ATT", field = "Pitch"},
+                new displayitem(){ type= "ATT", field = "DesPitch"},
+                new displayitem(){ type= "CTUN", field = "Alt", left =false},
+                new displayitem(){ type= "CTUN", field = "DAlt", left =false }
+            }},
             new displaylist() { Name = "Mechanical Failure - Stab", items = new displayitem[] { new displayitem(){ type= "ATT", field ="Roll"}, new displayitem(){ type= "ATT", field = "DesRoll"}}},
             new displaylist() { Name = "Mechanical Failure - Auto", items = new displayitem[] { new displayitem(){ type= "ATT", field ="Roll"}, new displayitem(){ type= "NTUN", field = "DRoll"}}},
             new displaylist() { Name = "Vibrations", items = new displayitem[] { new displayitem(){ type= "IMU", field ="AccX"}, new displayitem(){ type= "IMU", field ="AccY"},new displayitem(){ type= "IMU", field ="AccZ"}}},
@@ -146,28 +154,11 @@ namespace MissionPlanner.Log
                     if (openFileDialog1.FileName.ToLower().EndsWith(".bin"))
                     {
                         log.Info("before " + (GC.GetTotalMemory(false) / 1024.0 / 1024.0));
-                        // extract log - converts to assci lines
-                        var loglines = BinaryLog.ReadLog(openFileDialog1.FileName);
-                        log.Info("loglines " + (GC.GetTotalMemory(false) / 1024.0 / 1024.0));
-                        GC.Collect();
-                        log.Info("loglines2 " + (GC.GetTotalMemory(false) / 1024.0 / 1024.0));
-                        // create temp file 
                         string tempfile = Path.GetTempFileName();
-                        log.Info("temp file "+tempfile);
-                        stream = File.Open(tempfile,FileMode.Create,FileAccess.ReadWrite,FileShare.Delete);
-                        // save ascii lines to file
-                        foreach (string line in loglines)
-                        {
-                            stream.Write(ASCIIEncoding.ASCII.GetBytes(line), 0, line.Length);
-                        }
-                        stream.Flush();
-                        // back to stream start
-                        stream.Seek(0, SeekOrigin.Begin);
-                        loglines.Clear();
-                        loglines = null;
-                        // force memory reclaim after loglines clear
-                        GC.Collect();
-                        log.Info("loglines.clear " + (GC.GetTotalMemory(false) / 1024.0 / 1024.0));
+
+                        BinaryLog.ConvertBin(openFileDialog1.FileName, tempfile);
+
+                        stream = File.Open(tempfile, FileMode.Open, FileAccess.Read, FileShare.Read);
                     }
                     else
                     {
@@ -1358,8 +1349,14 @@ namespace MissionPlanner.Log
                 int targetRow = index;
                
                 targetRow = Math.Max(targetRow-halfWay, 0);
-                dataGridView.FirstDisplayedScrollingRowIndex = targetRow;
-
+                try
+                {
+                    dataGridView.FirstDisplayedScrollingRowIndex = targetRow;
+                }
+                catch 
+                { 
+                    //soft fail
+                }
             }
         }
 
